@@ -1,8 +1,1 @@
-#!/usr/bin/env bash
-
-SCRIPTPATH="$(readlink -f "$0")"
-BASEDIR=$(dirname "$SCRIPTPATH")
-
-pushd "${BASEDIR}/.." >/dev/null
-node dist/index.js
-popd >/dev/null
+../dist/index.js

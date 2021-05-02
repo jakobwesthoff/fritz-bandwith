@@ -2,13 +2,16 @@
   "name": "fritz-bandwidth",
   "version": "1.0.0",
   "description": "Simple CLI Monitor to display fritz.box! bandwidth information",
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
     "start": "npx ts-node index.ts",
     "build": "npx tsc --project .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Jakob Westhoff <jakob@westhoffswelt.de> (http://westhoffswelt.de",
+  "bin": {
+    "fritzbandwidth": "./dist/index.js"
+  },
+  "author": "Jakob Westhoff <jakob@westhoffswelt.de> (http://westhoffswelt.de)",
   "license": "MIT",
   "dependencies": {
     "@seydx/fritzbox": "^1.0.10",
