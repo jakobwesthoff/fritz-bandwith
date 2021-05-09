@@ -6,6 +6,7 @@ import chalk from "chalk";
 import prettyBytes from "pretty-bytes";
 import Conf from "conf";
 import inquirer from "inquirer";
+import babar from 'babar';
 
 interface Configuration {
   username: string;
@@ -14,9 +15,9 @@ interface Configuration {
 
 interface Bandwidth {
   time: Date;
-  avgBpsDownstreamPerSecond: number;
-  avgBpsUpstreamPerSecond: number;
-  avgBpsMulticastPerSecond: number;
+  bpsDownstream: number[];
+  bpsUpstream: number[];
+  bpsMulticast: number[];
 }
 
 let box: Fritzbox;
@@ -38,37 +39,42 @@ async function getBandwidth(): Promise<Bandwidth> {
 
   return {
     time: new Date(),
-    avgBpsDownstreamPerSecond: parseInt(downstreamValues[0]) * 8,
-    avgBpsUpstreamPerSecond: parseInt(upstreamValues[0]) * 8,
-    avgBpsMulticastPerSecond: parseInt(multicastValues[0]) * 8,
+    bpsDownstream: downstreamValues.map((value: string) => parseInt(value) * 8),
+    bpsUpstream: upstreamValues.map((value: string) => parseInt(value) * 8),
+    bpsMulticast: multicastValues.map((value: string) => parseInt(value) * 8),
   };
 }
 
 function render(bandwidth: Bandwidth): string {
-  let output: string[] = [];
+  let status: string[] = [];
 
-  output.push(
-    `${chalk.green("⬆︎")}  ${prettyBytes(bandwidth.avgBpsUpstreamPerSecond, {
+  status.push(
+    `${chalk.green("⬆︎")}  ${prettyBytes(bandwidth.bpsUpstream[0], {
       bits: true,
     })}/sec.`
   );
-  output.push(
-    `${chalk.red("⬇︎")}  ${prettyBytes(bandwidth.avgBpsDownstreamPerSecond, {
+  status.push(
+    `${chalk.red("⬇︎")}  ${prettyBytes(bandwidth.bpsDownstream[0], {
       bits: true,
     })}/sec.`
   );
-  output.push(
-    `${chalk.cyan("⥥")}  ${prettyBytes(bandwidth.avgBpsMulticastPerSecond, {
+  status.push(
+    `${chalk.cyan("⥥")}  ${prettyBytes(bandwidth.bpsMulticast[0], {
       bits: true,
     })}/sec.`
   );
 
-  return output.join("\n");
+  const historyUpstream = babar(bandwidth.bpsUpstream.map((value, index) => [index, value]), {color: 'green', height: 5});
+  const historyDownstream = babar(bandwidth.bpsDownstream.map((value, index) => [index, value]), {color: 'red', height: 5});
+  // const historyMulticast = babar(bandwidth.bpsMulticast.map((value, index) => [index, value]), {color: 'cyan', height: 5});
+
+  return status.join("\n") + "\n\n" + historyUpstream + "\n\n" + historyDownstream + "\n" ;
 }
 
 async function loop() {
   const bandwidth = await getBandwidth();
   logUpdate(render(bandwidth));
+  // console.log(render(bandwidth));
   setTimeout(loop, 5000);
 }
 

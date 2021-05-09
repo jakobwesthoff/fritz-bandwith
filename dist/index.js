@@ -8,6 +8,7 @@ const chalk_1 = tslib_1.__importDefault(require("chalk"));
 const pretty_bytes_1 = tslib_1.__importDefault(require("pretty-bytes"));
 const conf_1 = tslib_1.__importDefault(require("conf"));
 const inquirer_1 = tslib_1.__importDefault(require("inquirer"));
+const babar_1 = tslib_1.__importDefault(require("babar"));
 let box;
 let config;
 // const sum = (...value: string[]): number =>
@@ -21,29 +22,33 @@ function getBandwidth() {
         const multicastValues = info["Newmc_current_bps"].split(",");
         return {
             time: new Date(),
-            avgBpsDownstreamPerSecond: parseInt(downstreamValues[0]) * 8,
-            avgBpsUpstreamPerSecond: parseInt(upstreamValues[0]) * 8,
-            avgBpsMulticastPerSecond: parseInt(multicastValues[0]) * 8,
+            bpsDownstream: downstreamValues.map((value) => parseInt(value) * 8),
+            bpsUpstream: upstreamValues.map((value) => parseInt(value) * 8),
+            bpsMulticast: multicastValues.map((value) => parseInt(value) * 8),
         };
     });
 }
 function render(bandwidth) {
-    let output = [];
-    output.push(`${chalk_1.default.green("⬆︎")}  ${pretty_bytes_1.default(bandwidth.avgBpsUpstreamPerSecond, {
+    let status = [];
+    status.push(`${chalk_1.default.green("⬆︎")}  ${pretty_bytes_1.default(bandwidth.bpsUpstream[0], {
         bits: true,
     })}/sec.`);
-    output.push(`${chalk_1.default.red("⬇︎")}  ${pretty_bytes_1.default(bandwidth.avgBpsDownstreamPerSecond, {
+    status.push(`${chalk_1.default.red("⬇︎")}  ${pretty_bytes_1.default(bandwidth.bpsDownstream[0], {
         bits: true,
     })}/sec.`);
-    output.push(`${chalk_1.default.cyan("⥥")}  ${pretty_bytes_1.default(bandwidth.avgBpsMulticastPerSecond, {
+    status.push(`${chalk_1.default.cyan("⥥")}  ${pretty_bytes_1.default(bandwidth.bpsMulticast[0], {
         bits: true,
     })}/sec.`);
-    return output.join("\n");
+    const historyUpstream = babar_1.default(bandwidth.bpsUpstream.map((value, index) => [index, value]), { color: 'green', height: 5 });
+    const historyDownstream = babar_1.default(bandwidth.bpsDownstream.map((value, index) => [index, value]), { color: 'red', height: 5 });
+    // const historyMulticast = babar(bandwidth.bpsMulticast.map((value, index) => [index, value]), {color: 'cyan', height: 5});
+    return status.join("\n") + "\n\n" + historyUpstream + "\n\n" + historyDownstream + "\n";
 }
 function loop() {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const bandwidth = yield getBandwidth();
         log_update_1.default(render(bandwidth));
+        // console.log(render(bandwidth));
         setTimeout(loop, 5000);
     });
 }
